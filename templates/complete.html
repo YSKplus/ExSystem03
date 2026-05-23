@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>実験完了</title>
+    <style>
+      body { font-family: sans-serif; max-width: 800px; margin: auto; padding: 2rem; }
+      a { color: #0066cc; }
+    </style>
+  </head>
+  <body>
+    {% if aborted %}
+      <h1>実験は途中終了しました</h1>
+      <p>{{ name }} さん、実験を途中終了しました。</p>
+      <p>途中までの評価結果を保存しました。</p>
+    {% else %}
+      <h1>実験が完了しました</h1>
+      <p>{{ name }} さん、お疲れさまでした。</p>
+      <p>結果ファイルをダウンロードしてください。</p>
+    {% endif %}
+    <p><a href="{{ url_for('download', filename=filename) }}">結果をダウンロード</a></p>
+    <p>保存先: <code>results/{{ filename }}</code></p>
+  </body>
+</html>
