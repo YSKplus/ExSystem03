@@ -66,6 +66,7 @@ def create_result_file(participant_name, results):
 def index():
     if request.method == "POST":
         name = request.form.get("name", "").strip()
+        show_names = request.form.get("show_names", "hide")
         if not name:
             flash("氏名を入力してください。", "warning")
             return redirect(url_for("index"))
@@ -87,6 +88,7 @@ def index():
             "current": 0,
             "results": [],
             "counts": {p.name: 0 for p in wav_files},
+            "show_filenames": (show_names == "show"),
             "created_at": datetime.now(),
         }
         session["session_id"] = session_id
@@ -116,6 +118,7 @@ def experiment(session_id):
         trial=current + 1,
         total=len(pairs),
         session_id=session_id,
+        show_filenames=session_data.get("show_filenames", False),
     )
 
 

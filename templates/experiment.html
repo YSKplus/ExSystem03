@@ -5,14 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>実験 - {{ name }}</title>
     <style>
-      body { font-family: sans-serif; max-width: 900px; margin: auto; padding: 2rem; }
+      body { font-family: sans-serif; max-width: 900px; margin: auto; padding: 2rem; position: relative; }
       .section { margin-bottom: 1.5rem; }
       .rating button { margin: 0.2rem; min-width: 3rem; height: 3rem; }
       .audio-block { margin-bottom: 1rem; }
       .note { color: #555; }
+      .abort-container { position: absolute; top: 1rem; right: 1rem; }
+      .abort-button { background:#f44336; color:#fff; border:none; padding:0.7rem 1rem; border-radius:4px; cursor:pointer; }
+      .abort-button:hover { opacity:0.9; }
     </style>
   </head>
   <body>
+    <div class="abort-container">
+      <form id="abortForm" method="post" action="{{ url_for('abort', session_id=session_id) }}">
+        <button type="button" class="abort-button" onclick="confirmAbort()">実験途中終了</button>
+      </form>
+    </div>
     <h1>実験中</h1>
     <div class="section">
       <p>参加者: <strong>{{ name }}</strong></p>
@@ -26,6 +34,9 @@
         <source src="{{ url_for('serve_wav', filename=file_a) }}" type="audio/wav" />
         お使いのブラウザは audio 要素に対応していません。
       </audio>
+      {% if show_filenames %}
+        <div>{{ file_a }}</div>
+      {% endif %}
     </div>
 
     <div class="section audio-block">
@@ -34,6 +45,9 @@
         <source src="{{ url_for('serve_wav', filename=file_b) }}" type="audio/wav" />
         お使いのブラウザは audio 要素に対応していません。
       </audio>
+      {% if show_filenames %}
+        <div>{{ file_b }}</div>
+      {% endif %}
     </div>
 
     <form id="ratingForm" method="post" action="{{ url_for('submit', session_id=session_id) }}">
@@ -43,10 +57,6 @@
           <button type="button" onclick="submitRating({{ i }})" disabled>{{ i }}</button>
         {% endfor %}
       </div>
-    </form>
-
-    <form id="abortForm" method="post" action="{{ url_for('abort', session_id=session_id) }}">
-      <button type="button" onclick="confirmAbort()">実験途中終了</button>
     </form>
 
     <script>
