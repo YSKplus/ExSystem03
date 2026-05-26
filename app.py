@@ -11,7 +11,7 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "change-me")
 
 BASE_DIR = Path(__file__).resolve().parent
-WAV_DIR = BASE_DIR.parent / "ExSystem03_wav1"
+WAV_DIR = BASE_DIR.parent / "5_potechi_renamed"
 RESULTS_DIR = BASE_DIR / "results"
 RESULTS_DIR.mkdir(exist_ok=True)
 
