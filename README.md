@@ -2,17 +2,48 @@
 
 For MDS Experiments
 
+## 環境セットアップ
+
+### 前提条件
+
+- Python 3.7以上
+
+### インストール手順
+
+1. リポジトリをクローンします:
+
+   ```bash
+   git clone <repository-url>
+   cd ExSystem03
+   ```
+
+2. セットアップスクリプトを実行します:
+   - **Windows**: `setup.bat` をダブルクリック
+   - **Mac/Linux**: `bash setup.sh` を実行
+
+   これで仮想環境が作成され、必要なパッケージが自動的にインストールされます。
+
 ## 実行手順
 
-1. `ExSystem03` と同階層に `ExSystem03_wav` フォルダを作成し、比較対象の `.wav` ファイルを配置します。
-2. 必要な依存パッケージをインストールします:
-   ```bash
-   c:\work\ExSystem03\.venv\Scripts\python.exe -m pip install -r requirements.txt
+1. `ExSystem03` と同階層に `5_potechi_renamed` フォルダを作成し、比較対象の `.wav` ファイルを配置します:
+
    ```
+   parent_directory/
+   ├── ExSystem03/          (このプロジェクト)
+   └── 5_potechi_renamed/   (WAVファイルが必要)
+   ```
+
+2. 仮想環境を有効化します:
+   - **Windows (cmd)**: `.venv\Scripts\activate.bat`
+   - **Windows (PowerShell)**: `.venv\Scripts\Activate.ps1`
+   - **Mac/Linux**: `source .venv/bin/activate`
+
 3. サーバーを起動します:
+
    ```bash
-   c:\work\ExSystem03\.venv\Scripts\python.exe app.py
+   python app.py
    ```
+
 4. ブラウザで `http://127.0.0.1:5000` にアクセスし、氏名を入力して実験を開始します。
 
 ## 出力
