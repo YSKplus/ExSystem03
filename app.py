@@ -11,7 +11,7 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "change-me")
 
 BASE_DIR = Path(__file__).resolve().parent
-WAV_DIR = BASE_DIR.parent / "ExSystem03_wav"
+WAV_DIR = BASE_DIR.parent / "ExSystem03_wav1"
 RESULTS_DIR = BASE_DIR / "results"
 RESULTS_DIR.mkdir(exist_ok=True)
 
@@ -35,6 +35,14 @@ def build_pairs(file_list):
     return pairs
 
 
+def normalize_pair(file_a, file_b):
+    """Sort files alphabetically and return (early, late) pair."""
+    if file_a <= file_b:
+        return (file_a, file_b)
+    else:
+        return (file_b, file_a)
+
+
 def create_result_file(participant_name, results):
     safe_name = "_".join(participant_name.strip().split()) or "participant"
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -44,17 +52,28 @@ def create_result_file(participant_name, results):
     workbook = Workbook()
     sheet = workbook.active
     sheet.title = "results"
-    sheet.append(["File A", "File B", "Rating", "Trial Order",
+    sheet.append(["Pair ID", "File A", "File B", "Rating", "Trial Order",
                  "Play Count A", "Play Count B", "Response Time"])
 
     for row in results:
+        file_a_stem = Path(row["file_a"]).stem
+        file_b_stem = Path(row["file_b"]).stem
+        norm_a, norm_b = normalize_pair(file_a_stem, file_b_stem)
+        pair_id = f"{norm_a}_{norm_b}"
+
+        play_count_a = row["play_count_a"]
+        play_count_b = row["play_count_b"]
+        if norm_a != file_a_stem:
+            play_count_a, play_count_b = play_count_b, play_count_a
+
         sheet.append([
-            Path(row["file_a"]).stem,
-            Path(row["file_b"]).stem,
+            pair_id,
+            norm_a,
+            norm_b,
             row["rating"],
             row["trial_order"],
-            row["play_count_a"],
-            row["play_count_b"],
+            play_count_a,
+            play_count_b,
             row["response_time"],
         ])
 
@@ -66,6 +85,7 @@ def create_result_file(participant_name, results):
 def index():
     if request.method == "POST":
         name = request.form.get("name", "").strip()
+        show_names = request.form.get("show_names", "hide")
         if not name:
             flash("氏名を入力してください。", "warning")
             return redirect(url_for("index"))
@@ -86,7 +106,8 @@ def index():
             "pairs": pairs,
             "current": 0,
             "results": [],
-            "counts": {p.name: 0 for p in wav_files},
+            "trial_counts": {},
+            "show_filenames": (show_names == "show"),
             "created_at": datetime.now(),
         }
         session["session_id"] = session_id
@@ -108,6 +129,10 @@ def experiment(session_id):
         return redirect(url_for("complete", session_id=session_id))
 
     file_a, file_b = pairs[current]
+    trial_key = f"{current}"
+    if trial_key not in session_data["trial_counts"]:
+        session_data["trial_counts"][trial_key] = {file_a: 0, file_b: 0}
+
     return render_template(
         "experiment.html",
         name=session_data["name"],
@@ -116,6 +141,7 @@ def experiment(session_id):
         trial=current + 1,
         total=len(pairs),
         session_id=session_id,
+        show_filenames=session_data.get("show_filenames", False),
     )
 
 
@@ -133,13 +159,17 @@ def submit(session_id):
 
     current = session_data["current"]
     file_a, file_b = session_data["pairs"][current]
+    trial_key = f"{current}"
+    trial_counts = session_data["trial_counts"].get(
+        trial_key, {file_a: 0, file_b: 0})
+
     session_data["results"].append({
         "file_a": file_a,
         "file_b": file_b,
         "rating": int(rating),
         "trial_order": current + 1,
-        "play_count_a": session_data["counts"].get(file_a, 0),
-        "play_count_b": session_data["counts"].get(file_b, 0),
+        "play_count_a": trial_counts.get(file_a, 0),
+        "play_count_b": trial_counts.get(file_b, 0),
         "response_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     })
 
@@ -200,8 +230,16 @@ def count_play(session_id):
     if not session_data:
         return ("", 404)
     filename = request.json.get("filename")
-    if filename in session_data["counts"]:
-        session_data["counts"][filename] += 1
+    current = session_data.get("current", 0)
+    trial_key = f"{current}"
+
+    if trial_key not in session_data["trial_counts"]:
+        session_data["trial_counts"][trial_key] = {}
+
+    if filename not in session_data["trial_counts"][trial_key]:
+        session_data["trial_counts"][trial_key][filename] = 0
+
+    session_data["trial_counts"][trial_key][filename] += 1
     return ("", 204)
 
 

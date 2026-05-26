@@ -5,18 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>実験 - {{ name }}</title>
     <style>
-      body { font-family: sans-serif; max-width: 900px; margin: auto; padding: 2rem; }
+      body { font-family: sans-serif; max-width: 900px; margin: auto; padding: 2rem; position: relative; }
       .section { margin-bottom: 1.5rem; }
-      .rating button { margin: 0.2rem; min-width: 3rem; height: 3rem; }
+      .rating-grid { display: flex; justify-content: flex-start; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
+      .rating-item { display: flex; flex-direction: column; align-items: center; }
+      .rating-item button { margin: 0.2rem; min-width: 3rem; height: 3rem; }
+      .rating-label { writing-mode: vertical-rl; text-orientation: upright; font-size: 0.8rem; margin-top: 0.25rem; line-height: 1.1; }
       .audio-block { margin-bottom: 1rem; }
       .note { color: #555; }
+      .abort-container { position: absolute; top: 1rem; right: 1rem; }
+      .abort-button { background:#f44336; color:#fff; border:none; padding:0.7rem 1rem; border-radius:4px; cursor:pointer; }
+      .abort-button:hover { opacity:0.9; }
     </style>
   </head>
   <body>
+    <div class="abort-container">
+      <form id="abortForm" method="post" action="{{ url_for('abort', session_id=session_id) }}">
+        <button type="button" class="abort-button" onclick="confirmAbort()">実験途中終了</button>
+      </form>
+    </div>
     <h1>実験中</h1>
     <div class="section">
       <p>参加者: <strong>{{ name }}</strong></p>
       <p>試行 {{ trial }} / {{ total }}</p>
+      <p class="note">ポテトチップスの2つの咀嚼音について、全体的な印象がどの程度似ているかを評価してください。</p>
       <p class="note">両方の音声の再生が終了したら評価ボタンが有効になります。</p>
     </div>
 
@@ -26,6 +38,9 @@
         <source src="{{ url_for('serve_wav', filename=file_a) }}" type="audio/wav" />
         お使いのブラウザは audio 要素に対応していません。
       </audio>
+      {% if show_filenames %}
+        <div>{{ file_a }}</div>
+      {% endif %}
     </div>
 
     <div class="section audio-block">
@@ -34,25 +49,49 @@
         <source src="{{ url_for('serve_wav', filename=file_b) }}" type="audio/wav" />
         お使いのブラウザは audio 要素に対応していません。
       </audio>
+      {% if show_filenames %}
+        <div>{{ file_b }}</div>
+      {% endif %}
     </div>
 
     <form id="ratingForm" method="post" action="{{ url_for('submit', session_id=session_id) }}">
       <input type="hidden" name="rating" id="ratingInput" />
-      <div class="rating">
-        {% for i in range(1, 8) %}
-          <button type="button" onclick="submitRating({{ i }})" disabled>{{ i }}</button>
-        {% endfor %}
+      <div class="rating-grid">
+        <div class="rating-item">
+          <button type="button" onclick="submitRating(1)" disabled>1</button>
+          <div class="rating-label">非常に似ていない</div>
+        </div>
+        <div class="rating-item">
+          <button type="button" onclick="submitRating(2)" disabled>2</button>
+          <div class="rating-label">かなり似ていない</div>
+        </div>
+        <div class="rating-item">
+          <button type="button" onclick="submitRating(3)" disabled>3</button>
+          <div class="rating-label">やや似ていない</div>
+        </div>
+        <div class="rating-item">
+          <button type="button" onclick="submitRating(4)" disabled>4</button>
+          <div class="rating-label">どちらともいえない</div>
+        </div>
+        <div class="rating-item">
+          <button type="button" onclick="submitRating(5)" disabled>5</button>
+          <div class="rating-label">やや似ている</div>
+        </div>
+        <div class="rating-item">
+          <button type="button" onclick="submitRating(6)" disabled>6</button>
+          <div class="rating-label">かなり似ている</div>
+        </div>
+        <div class="rating-item">
+          <button type="button" onclick="submitRating(7)" disabled>7</button>
+          <div class="rating-label">非常に似ている</div>
+        </div>
       </div>
-    </form>
-
-    <form id="abortForm" method="post" action="{{ url_for('abort', session_id=session_id) }}">
-      <button type="button" onclick="confirmAbort()">実験途中終了</button>
     </form>
 
     <script>
       const audioA = document.getElementById('audioA');
       const audioB = document.getElementById('audioB');
-      const ratingButtons = Array.from(document.querySelectorAll('.rating button'));
+      const ratingButtons = Array.from(document.querySelectorAll('.rating-item button'));
       const ratingInput = document.getElementById('ratingInput');
       let endedA = false;
       let endedB = false;
