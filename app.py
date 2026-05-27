@@ -6,6 +6,7 @@ from itertools import combinations
 from openpyxl import Workbook
 import random
 import os
+import re
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "change-me")
@@ -20,24 +21,35 @@ ALLOWED_EXTENSIONS = {".wav"}
 sessions = {}
 
 
+NUMERIC_FILENAME_RE = re.compile(r"^\d+$")
+
+
+def _numeric_sort_key(item):
+    name = item.name if hasattr(item, "name") else str(item)
+    stem = Path(name).stem
+    if NUMERIC_FILENAME_RE.fullmatch(stem):
+        return (0, int(stem))
+    return (1, stem.lower())
+
+
 def get_wav_files():
     if not WAV_DIR.exists() or not WAV_DIR.is_dir():
         return []
-    files = [f for f in sorted(WAV_DIR.iterdir())
+    files = [f for f in sorted(WAV_DIR.iterdir(), key=_numeric_sort_key)
              if f.suffix.lower() in ALLOWED_EXTENSIONS]
     return files
 
 
 def build_pairs(file_list):
-    names = [f.name for f in sorted(file_list)]
+    names = [f.name for f in sorted(file_list, key=_numeric_sort_key)]
     pairs = list(combinations(names, 2))
     random.shuffle(pairs)
     return pairs
 
 
 def normalize_pair(file_a, file_b):
-    """Sort files alphabetically and return (early, late) pair."""
-    if file_a <= file_b:
+    """Sort files by numeric filename order and return (early, late) pair."""
+    if _numeric_sort_key(file_a) <= _numeric_sort_key(file_b):
         return (file_a, file_b)
     else:
         return (file_b, file_a)
