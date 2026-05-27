@@ -42,7 +42,12 @@ def get_wav_files():
 
 def build_pairs(file_list):
     names = [f.name for f in sorted(file_list, key=_numeric_sort_key)]
-    pairs = list(combinations(names, 2))
+    pairs = []
+    for file_a, file_b in combinations(names, 2):
+        if random.choice([True, False]):
+            pairs.append((file_a, file_b))
+        else:
+            pairs.append((file_b, file_a))
     random.shuffle(pairs)
     return pairs
 
@@ -68,24 +73,21 @@ def create_result_file(participant_name, results):
                  "Play Count A", "Play Count B", "Response Time"])
 
     for row in results:
-        file_a_stem = Path(row["file_a"]).stem
-        file_b_stem = Path(row["file_b"]).stem
+        file_a = row["file_a"]
+        file_b = row["file_b"]
+        file_a_stem = Path(file_a).stem
+        file_b_stem = Path(file_b).stem
         norm_a, norm_b = normalize_pair(file_a_stem, file_b_stem)
         pair_id = f"{norm_a}_{norm_b}"
 
-        play_count_a = row["play_count_a"]
-        play_count_b = row["play_count_b"]
-        if norm_a != file_a_stem:
-            play_count_a, play_count_b = play_count_b, play_count_a
-
         sheet.append([
             pair_id,
-            norm_a,
-            norm_b,
+            file_a,
+            file_b,
             row["rating"],
             row["trial_order"],
-            play_count_a,
-            play_count_b,
+            row["play_count_a"],
+            row["play_count_b"],
             row["response_time"],
         ])
 
